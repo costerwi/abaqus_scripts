@@ -65,15 +65,21 @@ print('Created scratch frame {} {}'.format(scratchFrame.frameId, scratchFrame.de
 for fo in frame.fieldOutputs.values():
     if not abaqusConstants.VECTOR == fo.type:
         continue # skip non vector outputs
-    print('{} {} elemental results'.format(fo.name, len(fo.values)), end='')
+    print('{} {} vector results'.format(fo.name, len(fo.values)), end='')
 
     # Group results by instance and node for averaging
     instData = {}
     for v in fo.values:
+        if not abaqusConstants.WHOLE_ELEMENT == v.position:
+            continue
         elem = v.instance.getElementFromLabel(v.elementLabel)
         for i, n in zip(elem.instanceNames, elem.connectivity):
             instData.setdefault(i, {}).setdefault(n, []).append(v.data)
     
+    if not instData:
+        print(' no whole element data found')
+        continue
+
     field = frame.FieldOutput(
             name=fo.name + '_', 
             description=fo.description,
